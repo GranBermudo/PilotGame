@@ -9,9 +9,15 @@ public class ShipBehaviour : MonoBehaviour
     public bool Moving = false;
     public bool Rotating = false;
 
+    public bool AlternateControl = false;
+
     public float decelerationFactor = 0.9f;
     public float Speed = 5;
     public float RotationSpeed = 1;
+
+    public Transform Blaster;
+
+    public LayerMask ennemiLayer;
 
     public bool controller = false;
 
@@ -24,7 +30,24 @@ public class ShipBehaviour : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if(controller == false)
+        //Switch LeftStickHorizontal between straff and rotation
+        if (Input.GetButtonDown("LeftStickButton"))
+        {
+            if (AlternateControl == true)
+                AlternateControl = false;
+            else
+                AlternateControl = true;
+        }
+
+        if (Input.GetButtonDown("RB"))
+        {
+            shoot();
+        }
+    }
+
+    private void FixedUpdate()
+    {
+        if (controller == false)
         {
             /////USING A KEYBOARD/////
 
@@ -127,13 +150,35 @@ public class ShipBehaviour : MonoBehaviour
         else
         {
             /////USING A CONTROLLER/////
-        }
-        
-    }
 
-    private void FixedUpdate()
-    {
-        if(Moving == false)
+            //to move the ship
+            if (AlternateControl == false)
+            {
+                //straffing
+                Vector3 move = new Vector3(0, -Input.GetAxis("LeftStickVertical"), Input.GetAxis("LT"));
+                move = move.normalized * Time.deltaTime * (Speed * 100);
+                rb.AddRelativeForce(move, ForceMode.Acceleration);
+
+                //rotation
+                Vector3 rotate = new Vector3(Input.GetAxis("RightStickVertical"), Input.GetAxis("LeftStickHorizontal"), -Input.GetAxis("RightStickHorizontal"));
+                move = rotate.normalized * Time.deltaTime * (RotationSpeed * 10);
+                rb.AddRelativeTorque(move, ForceMode.Acceleration);
+            }
+            else
+            {
+                //straffing
+                Vector3 move = new Vector3(Input.GetAxis("LeftStickHorizontal"), -Input.GetAxis("LeftStickVertical"), Input.GetAxis("LT"));
+                move = move.normalized * Time.deltaTime * (Speed * 100);
+                rb.AddRelativeForce(move, ForceMode.Acceleration);
+
+                //rotation
+                Vector3 rotate = new Vector3(Input.GetAxis("RightStickVertical"), 0, -Input.GetAxis("RightStickHorizontal"));
+                move = rotate.normalized * Time.deltaTime * (RotationSpeed * 10);
+                rb.AddRelativeTorque(move, ForceMode.Acceleration);
+            }
+        }
+
+        if (Moving == false)
         {
             rb.velocity = rb.velocity * decelerationFactor;
         }
@@ -141,6 +186,15 @@ public class ShipBehaviour : MonoBehaviour
         if(Rotating == false)
         {
             rb.angularVelocity = rb.angularVelocity * decelerationFactor;
+        }
+    }
+
+    void shoot()
+    {
+        RaycastHit hit;
+        if (Physics.Raycast(Blaster.position, Blaster.forward, out hit, Mathf.Infinity, ennemiLayer))
+        {
+            Debug.Log(hit.collider.gameObject.name);
         }
     }
 }
