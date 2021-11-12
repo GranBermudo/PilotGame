@@ -7,8 +7,6 @@ public class Projectile : MonoBehaviour
     public float Speed;
     public float Lifetime;
 
-    public LayerMask ennemisLayer;
-
     // Start is called before the first frame update
     void Start()
     {
@@ -18,8 +16,6 @@ public class Projectile : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        transform.Translate(transform.forward * Speed * Time.deltaTime);
-
         Lifetime -= Time.deltaTime;
         if(Lifetime <= 0f)
         {
@@ -27,12 +23,12 @@ public class Projectile : MonoBehaviour
         }
     }
 
-    private void OnCollisionEnter(Collision collision)
+    private void OnTriggerEnter(Collider other)
     {
-        if(collision.gameObject.layer == ennemisLayer)
+        if (other.gameObject.layer == 6)
         {
             //collision.gameObject.GetComponent<Health>();
-            Debug.Log(collision.gameObject.name);
+            Debug.Log(other.gameObject.name);
             Destroy(this.gameObject);
         }
     }

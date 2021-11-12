@@ -13,10 +13,20 @@ public class ShipBehaviour : MonoBehaviour
 
     public float decelerationFactor = 0.9f;
     public float Speed = 5;
+    public float maxSpeed = 5;
+    public float maxBoostSpeed = 5;
+    public float accelerationFactor = 5;
+    public float BoostaccelerationFactor = 5;
+    public float SpeedStraffing = 5;
     public float RotationSpeed = 1;
 
     public Transform Blaster;
     public GameObject Bullet;
+    public float BulletSpeed;
+    public float fireRate = 15f;
+    public float spreadFactor;
+
+    private float nextTimeToFire = 0f;
 
     public LayerMask ennemiLayer;
 
@@ -31,6 +41,33 @@ public class ShipBehaviour : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        if (Input.GetButton("Abutton"))
+        {
+            if (Input.GetAxis("LT") != 0 && Speed < maxBoostSpeed)
+            {
+                Speed += BoostaccelerationFactor * Time.deltaTime;
+            }
+            else if (Input.GetAxisRaw("LT") == 0)
+            {
+                Speed = 0;
+            }
+        }
+        else
+        {
+            if (Input.GetAxis("LT") != 0 && Speed < maxSpeed)
+            {
+                Speed += accelerationFactor * Time.deltaTime;
+            }
+            else if(Speed > maxSpeed)
+            {
+                Speed -= accelerationFactor * Time.deltaTime;
+            }
+            else if (Input.GetAxisRaw("LT") == 0)
+            {
+                Speed = 0;
+            }
+        }
+
         //Switch LeftStickHorizontal between straff and rotation
         if (Input.GetButtonDown("LeftStickButton"))
         {
@@ -40,9 +77,11 @@ public class ShipBehaviour : MonoBehaviour
                 AlternateControl = true;
         }
 
-        if (Input.GetButtonDown("RB"))
+        //shooting with autocannon
+        if (Input.GetButton("RB") && Time.time >= nextTimeToFire)
         {
-            shoot();
+            nextTimeToFire = Time.time + 1f / fireRate;
+            shootAutocannon(Blaster, BulletSpeed);
         }
     }
 
@@ -152,28 +191,41 @@ public class ShipBehaviour : MonoBehaviour
         {
             /////USING A CONTROLLER/////
 
+            Vector3 move = new Vector3();
+            Vector3 acceleration = new Vector3();
+
             //to move the ship
             if (AlternateControl == false)
             {
+                //acceleration
+                acceleration = new Vector3(0, 0, Input.GetAxis("LT"));
+                acceleration = acceleration.normalized * Time.deltaTime * (Speed * 100);
+                rb.AddRelativeForce(acceleration, ForceMode.Acceleration);
+
                 //straffing
-                Vector3 move = new Vector3(0, -Input.GetAxis("LeftStickVertical"), Input.GetAxis("LT"));
-                move = move.normalized * Time.deltaTime * (Speed * 100);
+                move = new Vector3(0, Input.GetAxis("RightStickVertical"), 0);
+                move = move.normalized * Time.deltaTime * (SpeedStraffing * 100);
                 rb.AddRelativeForce(move, ForceMode.Acceleration);
 
                 //rotation
-                Vector3 rotate = new Vector3(Input.GetAxis("RightStickVertical"), Input.GetAxis("LeftStickHorizontal"), -Input.GetAxis("RightStickHorizontal"));
+                Vector3 rotate = new Vector3(-Input.GetAxis("LeftStickVertical"), Input.GetAxis("RightStickHorizontal"), -Input.GetAxis("LeftStickHorizontal"));
                 move = rotate.normalized * Time.deltaTime * (RotationSpeed * 10);
                 rb.AddRelativeTorque(move, ForceMode.Acceleration);
             }
             else
             {
+                //acceleration
+                acceleration = new Vector3(0, 0, Input.GetAxis("LT"));
+                acceleration = acceleration.normalized * Time.deltaTime * (Speed * 100);
+                rb.AddRelativeForce(acceleration, ForceMode.Acceleration);
+
                 //straffing
-                Vector3 move = new Vector3(Input.GetAxis("LeftStickHorizontal"), -Input.GetAxis("LeftStickVertical"), Input.GetAxis("LT"));
-                move = move.normalized * Time.deltaTime * (Speed * 100);
+                move = new Vector3(Input.GetAxis("RightStickHorizontal"), Input.GetAxis("RightStickVertical"), 0);
+                move = move.normalized * Time.deltaTime * (SpeedStraffing * 100);
                 rb.AddRelativeForce(move, ForceMode.Acceleration);
 
                 //rotation
-                Vector3 rotate = new Vector3(Input.GetAxis("RightStickVertical"), 0, -Input.GetAxis("RightStickHorizontal"));
+                Vector3 rotate = new Vector3(-Input.GetAxis("LeftStickVertical"), 0, -Input.GetAxis("LeftStickHorizontal"));
                 move = rotate.normalized * Time.deltaTime * (RotationSpeed * 10);
                 rb.AddRelativeTorque(move, ForceMode.Acceleration);
             }
@@ -190,7 +242,7 @@ public class ShipBehaviour : MonoBehaviour
         }
     }
 
-    void shoot()
+    void shootAutocannon(Transform firepoint, float BulletSpeed)
     {
         /*RaycastHit hit;
         if (Physics.Raycast(Blaster.position, Blaster.forward, out hit, Mathf.Infinity, ennemiLayer))
@@ -198,6 +250,11 @@ public class ShipBehaviour : MonoBehaviour
             Debug.Log(hit.collider.gameObject.name);
         }*/
 
-        Instantiate(Bullet, Blaster.position, Quaternion.Euler(transform.forward));
+        Vector3 shootDir = firepoint.transform.forward;
+        shootDir.x += Random.Range(-spreadFactor, spreadFactor);
+        shootDir.y += Random.Range(-spreadFactor, spreadFactor);
+
+        var projectileObj = Instantiate(Bullet, firepoint.position, Blaster.rotation) as GameObject;
+        projectileObj.GetComponent<Rigidbody>().AddForce(shootDir * BulletSpeed, ForceMode.Impulse);
     }
 }
