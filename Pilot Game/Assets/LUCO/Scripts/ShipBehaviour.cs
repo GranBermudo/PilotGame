@@ -16,6 +16,7 @@ public class ShipBehaviour : MonoBehaviour
     public float RotationSpeed = 1;
 
     public Transform Blaster;
+    public GameObject Bullet;
 
     public LayerMask ennemiLayer;
 
@@ -191,10 +192,12 @@ public class ShipBehaviour : MonoBehaviour
 
     void shoot()
     {
-        RaycastHit hit;
+        /*RaycastHit hit;
         if (Physics.Raycast(Blaster.position, Blaster.forward, out hit, Mathf.Infinity, ennemiLayer))
         {
             Debug.Log(hit.collider.gameObject.name);
-        }
+        }*/
+
+        Instantiate(Bullet, Blaster.position, Quaternion.Euler(transform.forward));
     }
 }
