@@ -6,11 +6,12 @@ public class ShipBehaviour : MonoBehaviour
 {
     private Rigidbody rb;
 
-    public bool Moving = false;
-    public bool Rotating = false;
+    private bool Moving = false;
+    private bool Rotating = false;
 
-    public bool AlternateControl = false;
+    private bool AlternateControl = false;
 
+    [Header ("Ship Controls Parameters")]
     public float decelerationFactor = 0.9f;
     public float Speed = 5;
     public float maxSpeed = 5;
@@ -20,16 +21,24 @@ public class ShipBehaviour : MonoBehaviour
     public float SpeedStraffing = 5;
     public float RotationSpeed = 1;
 
+    [Header ("Machineguns")]
     public Transform Blaster;
     public GameObject Bullet;
     public float BulletSpeed;
     public float fireRate = 15f;
     public float spreadFactor;
-
     private float nextTimeToFire = 0f;
 
-    public LayerMask ennemiLayer;
+    [Header ("Missiles")]
+    public Transform MissileLaucherTransform;
+    public GameObject Missile;
 
+    [Header ("Targeting")]
+    public LayerMask ennemiLayer;
+    public List<GameObject> TargetsInSight = new List<GameObject>();
+    public GameObject LockedShip;
+
+    [Header ("if the player use a controller or not")]
     public bool controller = false;
 
     // Start is called before the first frame update
@@ -41,6 +50,7 @@ public class ShipBehaviour : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        //To boost Spaceship speed or let it at its default speed
         if (Input.GetButton("Abutton"))
         {
             if (Input.GetAxis("LT") != 0 && Speed < maxBoostSpeed)
@@ -68,6 +78,12 @@ public class ShipBehaviour : MonoBehaviour
             }
         }
 
+        //lock on an object from the target list
+        if (Input.GetButtonDown("Ybutton"))
+        {
+            LockTarget();
+        }
+
         //Switch LeftStickHorizontal between straff and rotation
         if (Input.GetButtonDown("LeftStickButton"))
         {
@@ -81,7 +97,14 @@ public class ShipBehaviour : MonoBehaviour
         if (Input.GetButton("RB") && Time.time >= nextTimeToFire)
         {
             nextTimeToFire = Time.time + 1f / fireRate;
-            shootAutocannon(Blaster, BulletSpeed);
+            shootAutocannon(Bullet ,Blaster, BulletSpeed);
+        }
+
+        //shooting a missile
+        if (Input.GetButtonDown("LB"))
+        {
+            //cooldownMissile
+            shootMissile(Missile, MissileLaucherTransform);
         }
     }
 
@@ -242,7 +265,7 @@ public class ShipBehaviour : MonoBehaviour
         }
     }
 
-    void shootAutocannon(Transform firepoint, float BulletSpeed)
+    void shootAutocannon(GameObject bullet, Transform firepoint, float BulletSpeed)
     {
         /*RaycastHit hit;
         if (Physics.Raycast(Blaster.position, Blaster.forward, out hit, Mathf.Infinity, ennemiLayer))
@@ -254,7 +277,45 @@ public class ShipBehaviour : MonoBehaviour
         shootDir.x += Random.Range(-spreadFactor, spreadFactor);
         shootDir.y += Random.Range(-spreadFactor, spreadFactor);
 
-        var projectileObj = Instantiate(Bullet, firepoint.position, Blaster.rotation) as GameObject;
+        var projectileObj = Instantiate(bullet, firepoint.position, Blaster.rotation) as GameObject;
         projectileObj.GetComponent<Rigidbody>().AddForce(shootDir * BulletSpeed, ForceMode.Impulse);
+    }
+
+    void shootMissile(GameObject missile, Transform MissileLauncher)
+    {
+        var projectileObj = Instantiate(missile, MissileLauncher.position, MissileLauncher.rotation) as GameObject;
+        if(LockedShip != null)
+        {
+            projectileObj.GetComponent<Missile>().target = LockedShip.transform;
+        }
+        projectileObj.GetComponent<Missile>().initiateTrackingDelay();
+    }
+
+    void LockTarget()
+    {
+        GameObject bestTarget = null;
+        float closestDistanceSqr = Mathf.Infinity;
+        Vector3 currentPosition = transform.position;
+        foreach(GameObject potentialTarget in TargetsInSight)
+        {
+            Vector3 directionToTarget = potentialTarget.transform.position - currentPosition;
+            float dSqrToTarget = directionToTarget.sqrMagnitude;
+            if(dSqrToTarget < closestDistanceSqr)
+            {
+                closestDistanceSqr = dSqrToTarget;
+                bestTarget = potentialTarget;
+            }
+        }
+
+        if(bestTarget != null)
+        {
+            LockedShip = bestTarget;
+        }
+
+        //unlock
+        if(TargetsInSight.Count == 0)
+        {
+            LockedShip = null;
+        }
     }
 }
