@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7996760673061650582}
   - component: {fileID: 9175501750096226338}
+  - component: {fileID: 1386292528430527518}
   m_Layer: 6
   m_Name: Training_Probe
   m_TagString: Untagged
@@ -45,6 +46,19 @@ SphereCollider:
   serializedVersion: 2
   m_Radius: 1.5
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &1386292528430527518
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2192714088126638692}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6f69f459aa3e6ca4c8a176c90f8d9fec, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  shipParts: []
 --- !u!1 &4508928939017112682
 GameObject:
   m_ObjectHideFlags: 0

@@ -35,8 +35,12 @@ public class ShipBehaviour : MonoBehaviour
 
     [Header ("Targeting")]
     public LayerMask ennemiLayer;
+    public float detectionRange = 50f;
     public List<GameObject> TargetsInSight = new List<GameObject>();
+    private int whereInList = 0;
     public GameObject LockedShip;
+    public GameObject lockedWidget;
+    public GameObject GizmoLock;
 
     [Header ("if the player use a controller or not")]
     public bool controller = false;
@@ -50,20 +54,22 @@ public class ShipBehaviour : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        //To boost Spaceship speed or let it at its default speed
-        if (Input.GetButton("Abutton"))
+        //add cursor to locked ship and keep it facing Player
+        if(LockedShip != null)
         {
-            if (Input.GetAxis("LT") != 0 && Speed < maxBoostSpeed)
-            {
-                Speed += BoostaccelerationFactor * Time.deltaTime;
-            }
-            else if (Input.GetAxisRaw("LT") == 0)
-            {
-                Speed = 0;
-            }
+            lockedWidget.transform.LookAt(transform);
+            GizmoLock.transform.LookAt(LockedShip.transform);
+
+            lockedWidget.transform.position = LockedShip.transform.position;
+            lockedWidget.SetActive(true);
         }
         else
         {
+            lockedWidget.SetActive(false);
+            lockedWidget.transform.position = Vector3.zero;
+        }
+
+        //To boost Spaceship speed or let it at its default speed
             if (Input.GetAxis("LT") != 0 && Speed < maxSpeed)
             {
                 Speed += accelerationFactor * Time.deltaTime;
@@ -76,7 +82,6 @@ public class ShipBehaviour : MonoBehaviour
             {
                 Speed = 0;
             }
-        }
 
         //lock on an object from the target list
         if (Input.GetButtonDown("Ybutton"))
@@ -94,14 +99,14 @@ public class ShipBehaviour : MonoBehaviour
         }
 
         //shooting with autocannon
-        if (Input.GetButton("RB") && Time.time >= nextTimeToFire)
+        if (Input.GetButton("Abutton") && Time.time >= nextTimeToFire)
         {
             nextTimeToFire = Time.time + 1f / fireRate;
             shootAutocannon(Bullet ,Blaster, BulletSpeed);
         }
 
         //shooting a missile
-        if (Input.GetButtonDown("LB"))
+        if (Input.GetButtonDown("Bbutton"))
         {
             //cooldownMissile
             shootMissile(Missile, MissileLaucherTransform);
@@ -231,11 +236,25 @@ public class ShipBehaviour : MonoBehaviour
                 rb.AddRelativeForce(move, ForceMode.Acceleration);
 
                 //rotation
-                Vector3 rotate = new Vector3(-Input.GetAxis("LeftStickVertical"), Input.GetAxis("RightStickHorizontal"), -Input.GetAxis("LeftStickHorizontal"));
+                float Yrot = 0;
+                if (Input.GetButton("LB"))
+                {
+                    Yrot = -1;
+                }
+                else if (Input.GetButton("RB"))
+                {
+                    Yrot = 1;
+                }
+                else if (Input.GetButton("LB") && Input.GetButton("RB"))
+                {
+                    Yrot = 0;
+                }
+
+                Vector3 rotate = new Vector3(-Input.GetAxis("LeftStickVertical"), Yrot, -Input.GetAxis("LeftStickHorizontal"));
                 move = rotate.normalized * Time.deltaTime * (RotationSpeed * 10);
                 rb.AddRelativeTorque(move, ForceMode.Acceleration);
             }
-            else
+            /*else
             {
                 //acceleration
                 acceleration = new Vector3(0, 0, Input.GetAxis("LT"));
@@ -251,7 +270,7 @@ public class ShipBehaviour : MonoBehaviour
                 Vector3 rotate = new Vector3(-Input.GetAxis("LeftStickVertical"), 0, -Input.GetAxis("LeftStickHorizontal"));
                 move = rotate.normalized * Time.deltaTime * (RotationSpeed * 10);
                 rb.AddRelativeTorque(move, ForceMode.Acceleration);
-            }
+            }*/
         }
 
         if (Moving == false)
@@ -293,7 +312,7 @@ public class ShipBehaviour : MonoBehaviour
 
     void LockTarget()
     {
-        GameObject bestTarget = null;
+        /*GameObject bestTarget = null;
         float closestDistanceSqr = Mathf.Infinity;
         Vector3 currentPosition = transform.position;
         foreach(GameObject potentialTarget in TargetsInSight)
@@ -310,8 +329,40 @@ public class ShipBehaviour : MonoBehaviour
         if(bestTarget != null)
         {
             LockedShip = bestTarget;
-        }
+        }*/
 
+
+        //iterate trough target list
+        whereInList++;
+        if(TargetsInSight.Count != 0)
+        {
+            if (whereInList <= TargetsInSight.Count - 1)
+            {
+                if (TargetsInSight[whereInList] != null)
+                {
+                    LockedShip = TargetsInSight[whereInList];
+                }
+                else if (TargetsInSight[whereInList] == null)
+                {
+                    TargetsInSight[whereInList] = TargetsInSight[TargetsInSight.Count - 1];
+                    TargetsInSight.RemoveAt(TargetsInSight.Count - 1);
+                }
+            }
+            else if (whereInList > TargetsInSight.Count - 1)
+            {
+                whereInList = 0;
+                if (TargetsInSight[whereInList] != null)
+                {
+                    LockedShip = TargetsInSight[whereInList];
+                }
+                else if (TargetsInSight[whereInList] == null)
+                {
+                    TargetsInSight[whereInList] = TargetsInSight[TargetsInSight.Count - 1];
+                    TargetsInSight.RemoveAt(TargetsInSight.Count - 1);
+                }
+            }
+        }
+        
         //unlock
         if(TargetsInSight.Count == 0)
         {

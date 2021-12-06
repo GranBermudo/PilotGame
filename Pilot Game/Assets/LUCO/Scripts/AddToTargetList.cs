@@ -15,7 +15,7 @@ public class AddToTargetList : MonoBehaviour
 
     private void Update()
     {
-        foreach(MeshRenderer mr in shipParts)
+        /*foreach(MeshRenderer mr in shipParts)
         {
             if (mr.isVisible && spotted == false)
             {
@@ -27,6 +27,17 @@ public class AddToTargetList : MonoBehaviour
                 playerShipBehaviour.TargetsInSight.Remove(this.gameObject);
                 spotted = false;
             }
+        }*/
+
+        if(Vector3.Distance(transform.position, playerShipBehaviour.transform.position) <= playerShipBehaviour.detectionRange && spotted == false)
+        {
+            playerShipBehaviour.TargetsInSight.Add(this.gameObject);
+            spotted = true;
+        }
+        else if (Vector3.Distance(transform.position, playerShipBehaviour.transform.position) > playerShipBehaviour.detectionRange)
+        {
+            playerShipBehaviour.TargetsInSight.Remove(this.gameObject);
+            spotted = false;
         }
     }
 }
